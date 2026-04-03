@@ -46,7 +46,7 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 100;
-      background: var(--bg-body);
+      background: url('./background_app.png') center/cover no-repeat, var(--bg-body);
       padding: 24px;
       transition: opacity 0.4s, transform 0.4s;
     }
@@ -397,11 +397,6 @@
       <button class="sta-connect-btn" id="btnStaConnect" type="button">CONECTAR</button>
     </div>
 
-    <!-- Saved IPs -->
-    <div class="conn-history" id="historySection" style="display:none;">
-      <div class="conn-history-title">Últimos usados</div>
-      <div id="historyChips"></div>
-    </div>
   </div>
 
   <!-- ===== LOADING OVERLAY ===== -->
