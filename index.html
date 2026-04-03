@@ -661,6 +661,7 @@
       }
 
       function disconnect() {
+        editorFrame.onload = null;
         editorFrame.src = "about:blank";
         teardownWifiBridge();
         appShell.classList.remove("active");
@@ -713,6 +714,7 @@
 
       // --- Force connection screen on every app open/resume ---
       function resetToConnectionScreen() {
+        editorFrame.onload = null;
         editorFrame.src = "about:blank";
         teardownWifiBridge();
         appShell.classList.remove("active");
