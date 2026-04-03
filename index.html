@@ -44,10 +44,10 @@
     #connectionScreen {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      align-items: center; justify-content: space-between;
       z-index: 100;
       background: url('./back_app.jpg') center/cover no-repeat, var(--bg-body);
-      padding: 24px;
+      padding: 0;
       transition: opacity 0.4s, transform 0.4s;
     }
     #connectionScreen.hidden {
@@ -55,12 +55,17 @@
       pointer-events: none;
     }
 
+    .conn-top {
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding-top: 52px;
+    }
+
     .conn-logo {
-      width: 96px; height: 96px;
-      border-radius: 22px;
+      width: 72px; height: 72px;
+      border-radius: 18px;
       overflow: hidden;
-      margin-bottom: 14px;
-      margin-top: -80px;
+      margin-bottom: 10px;
       box-shadow: 0 8px 32px var(--accent-glow);
     }
     .conn-logo img {
@@ -70,19 +75,23 @@
     }
 
     .conn-title {
-      font-size: 26px; font-weight: 800;
-      margin-bottom: 4px;
-      letter-spacing: 0.04em;
+      font-size: 22px; font-weight: 800;
+      margin-bottom: 0;
+      letter-spacing: 0.06em;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
-    .conn-sub {
-      font-size: 13px; color: var(--text-secondary);
-      margin-bottom: 36px;
-      text-align: center;
+    .conn-sub { display: none; }
+
+    .conn-bottom {
+      width: 100%;
+      padding: 0 24px 48px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 12px;
     }
 
     .conn-options {
       display: flex; flex-direction: column;
-      gap: 14px; width: 100%; max-width: 340px;
+      gap: 12px; width: 100%; max-width: 340px;
     }
 
     .conn-btn {
@@ -365,38 +374,41 @@
 
   <!-- ===== CONNECTION SCREEN ===== -->
   <div id="connectionScreen">
-    <div class="conn-logo"><img src="./assets/icons/icon-192.png" alt="BFMIDI" /></div>
-    <h1 class="conn-title">BFMiDi EDITOR</h1>
-    <p class="conn-sub">Escolha o modo de conexão WiFi com o seu pedal</p>
-
-    <div class="conn-options">
-      <!-- DIRECT AP -->
-      <button class="conn-btn direct" id="btnDirect" type="button">
-        <div class="icon-circle">
-          <span class="material-symbols-outlined">wifi_tethering</span>
-        </div>
-        <div class="conn-btn-text">
-          <h3>CONEXÃO DIRETA</h3>
-          <p>WiFi do pedal (BFMIDI_WIFI)<br>IP: 192.168.4.1</p>
-        </div>
-      </button>
-
-      <!-- STA / HOME NETWORK -->
-      <button class="conn-btn sta" id="btnSta" type="button">
-        <div class="icon-circle">
-          <span class="material-symbols-outlined">router</span>
-        </div>
-        <div class="conn-btn-text">
-          <h3>REDE LOCAL (Casa)</h3>
-          <p>Pedal conectado no seu roteador<br>bfmidi.local</p>
-        </div>
-      </button>
+    <div class="conn-top">
+      <div class="conn-logo"><img src="./assets/icons/icon-192.png" alt="BFMIDI" /></div>
+      <h1 class="conn-title">BFMiDi EDITOR</h1>
     </div>
 
-    <!-- STA IP Input -->
-    <div class="sta-input-row" id="staInputRow">
-      <input type="text" id="staIpInput" placeholder="IP ou bfmidi.local" autocomplete="off" spellcheck="false" />
-      <button class="sta-connect-btn" id="btnStaConnect" type="button">CONECTAR</button>
+    <div class="conn-bottom">
+      <div class="conn-options">
+        <!-- DIRECT AP -->
+        <button class="conn-btn direct" id="btnDirect" type="button">
+          <div class="icon-circle">
+            <span class="material-symbols-outlined">wifi_tethering</span>
+          </div>
+          <div class="conn-btn-text">
+            <h3>CONEXÃO DIRETA</h3>
+            <p>WiFi do pedal (BFMIDI_WIFI)<br>IP: 192.168.4.1</p>
+          </div>
+        </button>
+
+        <!-- STA / HOME NETWORK -->
+        <button class="conn-btn sta" id="btnSta" type="button">
+          <div class="icon-circle">
+            <span class="material-symbols-outlined">router</span>
+          </div>
+          <div class="conn-btn-text">
+            <h3>REDE LOCAL (Casa)</h3>
+            <p>Pedal conectado no seu roteador<br>bfmidi.local</p>
+          </div>
+        </button>
+      </div>
+
+      <!-- STA IP Input -->
+      <div class="sta-input-row" id="staInputRow">
+        <input type="text" id="staIpInput" placeholder="IP ou bfmidi.local" autocomplete="off" spellcheck="false" />
+        <button class="sta-connect-btn" id="btnStaConnect" type="button">CONECTAR</button>
+      </div>
     </div>
 
   </div>
