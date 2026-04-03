@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#121214" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BFMIDI">
+  <title>BFMIDI WiFi</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-body: #121214;
+      --bg-card: #1c1c1f;
+      --bg-card-inner: #232326;
+      --accent: #FFB300;
+      --accent-hover: #ffc400;
+      --accent-glow: rgba(255, 179, 0, 0.35);
+      --text-primary: #f2f2f2;
+      --text-secondary: #a1a1aa;
+      --border-subtle: #333336;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --error: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* ========== CONNECTION SCREEN ========== */
+    #connectionScreen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100;
+      background: var(--bg-body);
+      padding: 24px;
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    #connectionScreen.hidden {
+      opacity: 0; transform: scale(0.95);
+      pointer-events: none;
+    }
+
+    .conn-logo {
+      width: 72px; height: 72px;
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+    .conn-logo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .conn-title {
+      font-size: 28px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .conn-sub {
+      font-size: 13px; color: var(--text-secondary);
+      margin-bottom: 36px;
+      text-align: center;
+    }
+
+    .conn-options {
+      display: flex; flex-direction: column;
+      gap: 14px; width: 100%; max-width: 340px;
+    }
+
+    .conn-btn {
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: left;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .conn-btn:hover, .conn-btn:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+    .conn-btn:active {
+      transform: translateY(0);
+    }
+
+    .conn-btn .icon-circle {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .conn-btn.direct .icon-circle {
+      background: rgba(255, 179, 0, 0.15);
+      color: var(--accent);
+    }
+    .conn-btn.sta .icon-circle {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--ok);
+    }
+
+    .conn-btn-text h3 {
+      font-size: 15px; font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .conn-btn-text p {
+      font-size: 11px; color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* STA IP Input */
+    .sta-input-row {
+      display: none;
+      flex-direction: column; gap: 10px;
+      width: 100%; max-width: 340px;
+      margin-top: 6px;
+      animation: slideDown 0.3s ease;
+    }
+    .sta-input-row.visible { display: flex; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .sta-input-row input {
+      width: 100%; padding: 14px 16px;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: 'Inter', monospace;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sta-input-row input:focus {
+      border-color: var(--accent);
+    }
+    .sta-input-row input::placeholder {
+      color: #555;
+    }
+
+    .sta-connect-btn {
+      padding: 14px;
+      background: var(--accent);
+      color: #121214;
+      border: none; border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .sta-connect-btn:hover { background: var(--accent-hover); }
+    .sta-connect-btn:active { transform: scale(0.97); }
+
+    /* ========== LOADING OVERLAY ========== */
+    #loadingOverlay {
+      position: fixed; inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 200;
+      background: rgba(18, 18, 20, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    #loadingOverlay.active { display: flex; }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--border-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 14px; color: var(--text-secondary);
+    }
+
+    /* ========== APP SHELL ========== */
+    #appShell {
+      display: none;
+      flex-direction: column;
+      width: 100%; height: 100%;
+    }
+    #appShell.active { display: flex; }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex; align-items: center;
+      height: 52px; flex-shrink: 0;
+      padding: 0 12px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 10px;
+    }
+    .top-bar-logo {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent) 0%, #e68a00 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #121214;
+      flex-shrink: 0;
+    }
+    .top-bar-title {
+      font-size: 15px; font-weight: 700;
+      flex: 1;
+    }
+    .top-bar-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 600;
+      color: var(--ok);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 6px var(--ok);
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .btn-disconnect-top {
+      background: none; border: none;
+      color: var(--text-secondary);
+      cursor: pointer; font-size: 20px;
+      padding: 4px;
+      display: flex; align-items: center;
+      transition: color 0.2s;
+    }
+    .btn-disconnect-top:hover { color: var(--error); }
+
+    /* iframe */
+    #editorFrame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: var(--bg-body);
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      display: flex;
+      height: 56px; flex-shrink: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-subtle);
+    }
+    .nav-tab {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px;
+      background: none; border: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 9px; font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-tab .material-symbols-outlined { font-size: 22px; }
+    .nav-tab.active {
+      color: var(--accent);
+    }
+    .nav-tab.active::after {
+      content: '';
+      position: absolute; top: 0; left: 20%; right: 20%;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 0 0 2px 2px;
+    }
+
+    /* ========== ERROR TOAST ========== */
+    #errorToast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e1e22;
+      border: 1px solid var(--error);
+      color: var(--text-primary);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      max-width: 320px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 300;
+    }
+    #errorToast.show {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* History section */
+    .conn-history {
+      width: 100%; max-width: 340px;
+      margin-top: 20px;
+    }
+    .conn-history-title {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .history-chip {
+      display: inline-flex;
+      align-items: center; gap: 6px;
+      padding: 8px 14px;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .history-chip:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .history-chip .material-symbols-outlined {
+      font-size: 14px; color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== CONNECTION SCREEN ===== -->
+  <div id="connectionScreen">
+    <div class="conn-logo"><img src="./assets/icons/icon-192.png" alt="BFMIDI" /></div>
+    <h1 class="conn-title">BFMIDI</h1>
+    <p class="conn-sub">Escolha o modo de conexão WiFi com o seu pedal</p>
+
+    <div class="conn-options">
+      <!-- DIRECT AP -->
+      <button class="conn-btn direct" id="btnDirect" type="button">
+        <div class="icon-circle">
+          <span class="material-symbols-outlined">wifi_tethering</span>
+        </div>
+        <div class="conn-btn-text">
+          <h3>CONEXÃO DIRETA</h3>
+          <p>WiFi do pedal (BFMIDI_WIFI)<br>IP: 192.168.4.1</p>
+        </div>
+      </button>
+
+      <!-- STA / HOME NETWORK -->
+      <button class="conn-btn sta" id="btnSta" type="button">
+        <div class="icon-circle">
+          <span class="material-symbols-outlined">router</span>
+        </div>
+        <div class="conn-btn-text">
+          <h3>REDE LOCAL (Casa)</h3>
+          <p>Pedal conectado no seu roteador<br>bfmidi.local</p>
+        </div>
+      </button>
+    </div>
+
+    <!-- STA IP Input -->
+    <div class="sta-input-row" id="staInputRow">
+      <input type="text" id="staIpInput" placeholder="IP ou bfmidi.local" autocomplete="off" spellcheck="false" />
+      <button class="sta-connect-btn" id="btnStaConnect" type="button">CONECTAR</button>
+    </div>
+
+    <!-- Saved IPs -->
+    <div class="conn-history" id="historySection" style="display:none;">
+      <div class="conn-history-title">Últimos usados</div>
+      <div id="historyChips"></div>
+    </div>
+  </div>
+
+  <!-- ===== LOADING OVERLAY ===== -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Conectando ao BFMIDI...</div>
+  </div>
+
+  <!-- ===== ERROR TOAST ===== -->
+  <div id="errorToast" role="alert"></div>
+
+  <!-- ===== APP SHELL ===== -->
+  <div id="appShell">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-logo">BF</div>
+      <div class="top-bar-title">BFMIDI</div>
+      <div class="top-bar-status">
+        <div class="status-dot"></div>
+        <span id="connLabel">ONLINE</span>
+      </div>
+      <button class="btn-disconnect-top" id="btnDisconnect" type="button" title="Desconectar">
+        <span class="material-symbols-outlined">logout</span>
+      </button>
+    </div>
+
+    <!-- Editor iframe -->
+    <iframe id="editorFrame" title="BFMIDI Editor" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <button class="nav-tab active" data-page="preset-config" id="tabPreset" type="button">
+        <span class="material-symbols-outlined">tune</span>
+        Presets
+      </button>
+      <button class="nav-tab" data-page="global-config" id="tabGlobal" type="button">
+        <span class="material-symbols-outlined">settings_input_component</span>
+        Global
+      </button>
+      <button class="nav-tab" data-page="system" id="tabSystem" type="button">
+        <span class="material-symbols-outlined">settings</span>
+        System
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ========================================================================
+    //  BFMIDI WiFi App — Shell + WiFi Bridge
+    // ========================================================================
+    (() => {
+      "use strict";
+
+      // =====================================================================
+      //  CONFIGURATION — Adjust these paths to match your GitHub Pages layout
+      // =====================================================================
+      // Base path where the external editor pages live relative to this shell.
+      // Since the pages are bundled locally in this same folder, use "."
+      const EDITOR_BASE_PATH = ".";
+
+      const PAGE_MAP = {
+        "preset-config": `${EDITOR_BASE_PATH}/preset-config/`,
+        "global-config": `${EDITOR_BASE_PATH}/global-config/`,
+        "system":        `${EDITOR_BASE_PATH}/system/`
+      };
+      // =====================================================================
+
+      // --- Storage helpers ---
+      const STORAGE_KEY = "bfmidi_wifi_history";
+      const MAX_HISTORY = 5;
+
+      function loadHistory() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        } catch { return []; }
+      }
+      function saveToHistory(ip) {
+        const list = loadHistory().filter(i => i !== ip);
+        list.unshift(ip);
+        if (list.length > MAX_HISTORY) list.length = MAX_HISTORY;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch {}
+      }
+
+      // --- DOM refs ---
+      const $ = (id) => document.getElementById(id);
+      const connectionScreen = $("connectionScreen");
+      const loadingOverlay    = $("loadingOverlay");
+      const loadingText       = $("loadingText");
+      const appShell          = $("appShell");
+      const editorFrame       = $("editorFrame");
+      const errorToast        = $("errorToast");
+      const btnDirect         = $("btnDirect");
+      const btnSta            = $("btnSta");
+      const staInputRow       = $("staInputRow");
+      const staIpInput        = $("staIpInput");
+      const btnStaConnect     = $("btnStaConnect");
+      const btnDisconnect     = $("btnDisconnect");
+      const connLabel         = $("connLabel");
+      const historySection    = $("historySection");
+      const historyChips      = $("historyChips");
+
+      let currentIp = null;
+      let currentPage = "preset-config";
+      let espBaseUrl = null;
+
+      // --- History chips ---
+      function renderHistory() {
+        const list = loadHistory();
+        if (!list.length) { historySection.style.display = "none"; return; }
+        historySection.style.display = "block";
+        historyChips.innerHTML = list.map(ip =>
+          `<span class="history-chip" data-ip="${ip}">
+            <span class="material-symbols-outlined">history</span>
+            ${ip}
+          </span>`
+        ).join("");
+
+        historyChips.querySelectorAll(".history-chip").forEach(chip => {
+          chip.addEventListener("click", () => connectTo(chip.dataset.ip));
+        });
+      }
+
+      // --- Toast ---
+      let toastTimer = null;
+      function showToast(msg, durationMs = 4000) {
+        errorToast.textContent = msg;
+        errorToast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => errorToast.classList.remove("show"), durationMs);
+      }
+
+      // --- Loading ---
+      function showLoading(msg) {
+        loadingText.textContent = msg || "Conectando ao BFMIDI...";
+        loadingOverlay.classList.add("active");
+      }
+      function hideLoading() {
+        loadingOverlay.classList.remove("active");
+      }
+
+      // =====================================================================
+      //  WiFi Bridge — Replaces the USB bridge for WiFi communication
+      //  The parity-bridge-client.js inside the editor iframe will find this
+      //  bridge on window.parent.BFMIDIExternalBridge and use it to redirect
+      //  all API fetch() calls to the ESP32 over HTTP.
+      // =====================================================================
+      function setupWifiBridge(baseUrl) {
+        window.BFMIDIExternalBridge = {
+          request: async (url, init) => {
+            // Rewrite: extract path + query from the editor's URL and
+            // redirect to the ESP32's IP address
+            const parsed = new URL(url);
+            const targetUrl = `${baseUrl}${parsed.pathname}${parsed.search}`;
+
+            console.log(`[WiFi Bridge] ${init?.method || "GET"} ${targetUrl}`);
+
+            // Use text/plain for POST to avoid CORS preflight (OPTIONS round-trip)
+            const method = init?.method || "GET";
+            const headers = { ...(init?.headers || {}) };
+            if (method !== "GET" && method !== "HEAD" && headers["content-type"]?.includes("application/json")) {
+              headers["content-type"] = "text/plain;charset=UTF-8";
+            }
+
+            const resp = await fetch(targetUrl, {
+              method,
+              headers,
+              body: init?.body ?? undefined,
+              mode: "cors"
+            });
+
+            const body = await resp.text();
+            const respHeaders = {};
+            resp.headers.forEach((v, k) => { respHeaders[k] = v; });
+
+            return { body, status: resp.status, headers: respHeaders };
+          }
+        };
+        console.log("[WiFi Bridge] Bridge configurada para", baseUrl);
+      }
+
+      function teardownWifiBridge() {
+        delete window.BFMIDIExternalBridge;
+      }
+
+      // --- Connection ---
+      async function connectTo(ip) {
+        currentIp = ip.replace(/\/+$/, "");
+        espBaseUrl = currentIp.startsWith("http") ? currentIp : `http://${currentIp}`;
+
+        showLoading(`Conectando a ${currentIp}...`);
+
+        // Test connection with a lightweight API call
+        let reachable = false;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          const resp = await fetch(`${espBaseUrl}/api/system/info`, {
+            signal: controller.signal,
+            mode: "cors"
+          });
+          clearTimeout(timeout);
+          reachable = resp.ok;
+        } catch (err) {
+          console.warn("Fetch test failed:", err);
+          // Optimistic — let iframe try anyway
+          reachable = true;
+        }
+
+        if (!reachable) {
+          hideLoading();
+          showToast(`Não foi possível alcançar ${currentIp}. Verifique se o WiFi está conectado ao pedal.`);
+          return;
+        }
+
+        // Set up the WiFi bridge BEFORE loading the iframe
+        setupWifiBridge(espBaseUrl);
+
+        saveToHistory(currentIp);
+        connLabel.textContent = currentIp;
+
+        // Load the external editor page in iframe (from same GitHub Pages origin)
+        currentPage = "preset-config";
+        editorFrame.src = PAGE_MAP[currentPage];
+
+        editorFrame.onload = () => {
+          hideLoading();
+          connectionScreen.classList.add("hidden");
+          appShell.classList.add("active");
+        };
+
+        editorFrame.onerror = () => {
+          hideLoading();
+          showToast("Erro ao carregar a página do editor.");
+        };
+
+        // Safety timeout
+        setTimeout(() => {
+          if (!appShell.classList.contains("active")) {
+            hideLoading();
+            connectionScreen.classList.add("hidden");
+            appShell.classList.add("active");
+          }
+        }, 8000);
+      }
+
+      function disconnect() {
+        editorFrame.src = "about:blank";
+        teardownWifiBridge();
+        appShell.classList.remove("active");
+        connectionScreen.classList.remove("hidden");
+        currentIp = null;
+        espBaseUrl = null;
+        renderHistory();
+        document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+        document.querySelector('[data-page="preset-config"]').classList.add("active");
+        currentPage = "preset-config";
+      }
+
+      // --- Navigation ---
+      document.querySelectorAll(".nav-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          const page = tab.dataset.page;
+          if (page === currentPage || !currentIp) return;
+
+          document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          currentPage = page;
+
+          editorFrame.src = PAGE_MAP[page];
+        });
+      });
+
+      // --- Event Listeners ---
+      btnDirect.addEventListener("click", () => {
+        connectTo("192.168.4.1");
+      });
+
+      btnSta.addEventListener("click", () => {
+        connectTo("bfmidi.local");
+      });
+
+      btnStaConnect.addEventListener("click", () => {
+        const ip = staIpInput.value.trim();
+        if (!ip) {
+          showToast("Digite o IP ou endereço do pedal.");
+          return;
+        }
+        connectTo(ip);
+      });
+
+      staIpInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") btnStaConnect.click();
+      });
+
+      btnDisconnect.addEventListener("click", disconnect);
+
+      // --- Force connection screen on every app open/resume ---
+      function resetToConnectionScreen() {
+        editorFrame.src = "about:blank";
+        teardownWifiBridge();
+        appShell.classList.remove("active");
+        connectionScreen.classList.remove("hidden");
+        loadingOverlay.classList.remove("active");
+        staInputRow.classList.remove("visible");
+        currentIp = null;
+        espBaseUrl = null;
+        currentPage = "preset-config";
+        document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+        document.querySelector('[data-page="preset-config"]').classList.add("active");
+        renderHistory();
+      }
+
+      window.addEventListener("pageshow", () => {
+        resetToConnectionScreen();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          resetToConnectionScreen();
+        }
+      });
+
+      // --- Init ---
+      resetToConnectionScreen();
+
+      // Register Service Worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js").catch(err => {
+          console.warn("SW registration failed:", err);
+        });
+
+        // Recarrega automaticamente quando o SW ativa uma nova versão
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          if (event.data?.type === "SW_UPDATED") {
+            window.location.reload();
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
