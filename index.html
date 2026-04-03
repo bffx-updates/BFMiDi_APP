@@ -661,17 +661,7 @@
       }
 
       function disconnect() {
-        editorFrame.onload = null;
-        editorFrame.src = "about:blank";
-        teardownWifiBridge();
-        appShell.classList.remove("active");
-        connectionScreen.classList.remove("hidden");
-        currentIp = null;
-        espBaseUrl = null;
-        renderHistory();
-        document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
-        document.querySelector('[data-page="preset-config"]').classList.add("active");
-        currentPage = "preset-config";
+        window.location.reload();
       }
 
       // --- Navigation ---
