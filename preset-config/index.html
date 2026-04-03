@@ -14739,7 +14739,7 @@
                 initAutoSaveControls();
                 bindAutoSaveDomWatchers();
                 // navigation / save
-                document.getElementById('btnVoltar')?.addEventListener('click', () => { window.location.href = '../'; });
+                document.getElementById('btnVoltar')?.addEventListener('click', () => { window.parent.postMessage({ type: 'DISCONNECT' }, '*'); });
                 document.getElementById('btnSalvar')?.addEventListener('click', saveCurrentPresetData);
                 if (document.getElementById('saveBtnFake')?.dataset.boundSaveBtn !== '1') {
                     const saveBtn = document.getElementById('saveBtnFake');

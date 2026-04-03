@@ -751,6 +751,13 @@
           }
         });
       }
+
+      // Recebe pedido de desconexão dos iframes filhos
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "DISCONNECT") {
+          disconnect();
+        }
+      });
     })();
   </script>
 </body>
