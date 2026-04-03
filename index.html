@@ -520,9 +520,11 @@
 
       // --- History chips ---
       function renderHistory() {
+        if (!historySection) return;
         const list = loadHistory();
         if (!list.length) { historySection.style.display = "none"; return; }
         historySection.style.display = "block";
+        if (!historyChips) return;
         historyChips.innerHTML = list.map(ip =>
           `<span class="history-chip" data-ip="${ip}">
             <span class="material-symbols-outlined">history</span>
