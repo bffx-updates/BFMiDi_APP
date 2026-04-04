@@ -624,10 +624,16 @@
         }
 
         if (!reachable) {
+          currentIp = null;
           hideLoading();
-          showToast(`Não foi possível alcançar ${currentIp}. Verifique se o WiFi está conectado ao pedal.`);
+          showToast(`Não foi possível alcançar ${ip.replace(/\/+$/, "")}. Verifique se o WiFi está conectado ao pedal.`);
           return;
         }
+
+        // Re-affirm after async operation — resetToConnectionScreen() may have run
+        // during the await above (visibilitychange / pageshow), wiping currentIp/espBaseUrl.
+        currentIp = ip.replace(/\/+$/, "");
+        espBaseUrl = currentIp.startsWith("http") ? currentIp : `http://${currentIp}`;
 
         // Set up the WiFi bridge BEFORE loading the iframe
         setupWifiBridge(espBaseUrl);
@@ -653,6 +659,8 @@
         // Safety timeout
         setTimeout(() => {
           if (!appShell.classList.contains("active")) {
+            currentIp = ip.replace(/\/+$/, "");
+            espBaseUrl = currentIp.startsWith("http") ? currentIp : `http://${currentIp}`;
             hideLoading();
             connectionScreen.classList.add("hidden");
             appShell.classList.add("active");
