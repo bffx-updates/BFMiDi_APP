@@ -1,4 +1,4 @@
-const CACHE_NAME = "bfmidi-wifi-v37";
+const CACHE_NAME = "bfmidi-wifi-v38";
 
 // Core assets that MUST cache for the PWA install prompt.
 // Keep this list minimal and only with internal files to ensure install success.

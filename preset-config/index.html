@@ -8247,17 +8247,8 @@
                     if (el) el.style.display = show ? 'block' : 'none';
                 };
 
-                const curSel = document.getElementById('switchMode');
-                const curMode = curSel ? parseInt(curSel.value, 10) : 0;
-                const dualCheck = document.getElementById('dualStompEnabled');
-                const isDualEditMode = !!(dualCheck && dualCheck.checked);
-                const isSpinHoldMode = (curMode >= 1 && curMode <= 3) || (curMode >= 35 && curMode <= 37) || (curMode >= 38 && curMode <= 46);
-                const isDualStompMode = (curMode === 28 || curMode === 50);
-                const spinHoldCheck = document.getElementById('spinHoldEnabledToggle');
-                const isSpinHoldOn = !!(spinHoldCheck && spinHoldCheck.checked);
-                const iconsAllowed = !((isSpinHoldMode && isSpinHoldOn) || isDualStompMode || isDualEditMode);
-                const effectiveMode1 = iconsAllowed ? mode1 : 'sigla';
-                const effectiveMode2 = iconsAllowed ? mode2 : 'sigla';
+                const effectiveMode1 = mode1;
+                const effectiveMode2 = mode2;
                 const slotToggle = document.getElementById('gigSlotToggleContainer');
                 const dualSlotEnabled = !!(slotToggle && slotToggle.style.display !== 'none');
 
@@ -8368,6 +8359,7 @@
                     sw.cc = ccCustom;
                 }
                 if (sw.spin_send_pc === undefined) sw.spin_send_pc = false;
+                if (sw.spin_show_pos === undefined) sw.spin_show_pos = false;
                 if (sw.single_value === undefined) sw.single_value = 127;
                 {
                     const rawCc2Ch = (sw.cc2_ch !== undefined) ? parseInt(sw.cc2_ch, 10)
@@ -10152,7 +10144,7 @@
                 }
             }
 
-            function generateSingleSpinUI(parentElement, spinDataItem, spinIndex, sendAsPc = false, currentCC = 0) {
+            function generateSingleSpinUI(parentElement, spinDataItem, spinIndex, sendAsPc = false, currentCC = 0, spinShowPosition = false) {
                 const switchCCEl = document.getElementById('switchCC');
                 const ccVal = switchCCEl ? parseInt(switchCCEl.value, 10) : (currentCC || 0);
                 const isPitchTranspose = (getEffectiveMidiMode() === "KEMPER PLAYER" && ccVal === 208);
@@ -10178,6 +10170,8 @@
                                     <button type="button" id="spinSendPcBtn" class="spin-send-btn">ENVIA PC</button>
                                     <button type="button" id="spinCountBtn_${spinIndex}" class="spin-send-btn" style="min-width:72px;">SINGLE</button>
                                     <input type="checkbox" id="spinSendPcToggle" class="hidden" ${sendAsPc ? 'checked' : ''}>
+                                    <button type="button" id="spinShowPositionBtn" class="spin-send-btn${spinShowPosition ? ' active' : ''}" style="min-width:110px;">${spinShowPosition ? 'SHOW POSITION' : 'SHOW %'}</button>
+                                    <input type="checkbox" id="spinShowPositionToggle" class="hidden" ${spinShowPosition ? 'checked' : ''}>
                                 </div>
                             </div>
                             <div class="spin-values-grid" id="spinValuesContainer"></div>
@@ -10356,6 +10350,23 @@
                         });
                     }
                     syncSpinSendLocal();
+                }
+
+                const spinShowPosCheckbox = container.querySelector('#spinShowPositionToggle');
+                const spinShowPosBtn = container.querySelector('#spinShowPositionBtn');
+                if (spinShowPosCheckbox && spinShowPosBtn) {
+                    const syncSpinShowPos = () => {
+                        spinShowPosBtn.textContent = spinShowPosCheckbox.checked ? 'SHOW POSITION' : 'SHOW %';
+                        if (spinShowPosCheckbox.checked) spinShowPosBtn.classList.add('active');
+                        else spinShowPosBtn.classList.remove('active');
+                        try { updateLocalPresetDataFromUI(); } catch (_) { }
+                    };
+                    spinShowPosCheckbox.addEventListener('change', syncSpinShowPos);
+                    spinShowPosBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        spinShowPosCheckbox.checked = !spinShowPosCheckbox.checked;
+                        syncSpinShowPos();
+                    });
                 }
             }
 
@@ -11671,10 +11682,9 @@
                     }, 0);
                 }
 
-                // In modes that use FX + FX2 (split blocks), allow only SIGLAS (no icons)
                 const currentSwitchData = presetData?.switches?.[switchIndex] || {};
                 const isSpinHoldEnabled = isSpinHold && (currentSwitchData.start_value_cc2 !== true);
-                const onlySiglasMode = isDualStomp || isSpinHoldEnabled || !!currentSwitchData._dualActive;
+                const onlySiglasMode = false;
 
                 // Update Display card: show/hide GIG VIEW 2 based on mode
                 const gigView2Group = document.getElementById('gigView2Group');
@@ -12419,9 +12429,8 @@
                         currentSwitchData.reclick_enabled = reclickActive;
 
                         if (typeof window.setFxIconAllowed === 'function') {
-                            const allowIcons = !dualActive;
-                            window.setFxIconAllowed(1, allowIcons);
-                            window.setFxIconAllowed(2, allowIcons);
+                            window.setFxIconAllowed(1, true);
+                            window.setFxIconAllowed(2, true);
                         }
                         if (typeof window.refreshGigSlotUI === 'function') {
                             window.refreshGigSlotUI();
@@ -13228,7 +13237,7 @@
                         ? presetData.extras.spin[spinIndex]
                         : (defaultSpin && defaultSpin[spinIndex])
                         || { v1: 0, v2: 64, v3: 127, spin_count: 1, cc2: 0, v1cc2: 0, v2cc2: 64, v3cc2: 127, cc3: 0, v1cc3: 0, v2cc3: 64, v3cc3: 127 };
-                    generateSingleSpinUI(dynamicArea, spinItem, spinIndex, !!currentSwitchData.spin_send_pc, currentSwitchData.cc);
+                    generateSingleSpinUI(dynamicArea, spinItem, spinIndex, !!currentSwitchData.spin_send_pc, currentSwitchData.cc, !!currentSwitchData.spin_show_pos);
 
                     initCustomSelects();
                     const sv = spinItem || {};
@@ -13474,6 +13483,17 @@
                         updateCustomSelect('switchChannel');
                         updateSwitchSpecificUI(mode.toString(), switchIdx);
                         setTimeout(() => { try { syncSpinSendPcUI(!!defaultSwData.spin_send_pc, true); } catch (_) { } }, 0);
+                        setTimeout(() => {
+                            try {
+                                const spCb = document.getElementById('spinShowPositionToggle');
+                                const spBtn = document.getElementById('spinShowPositionBtn');
+                                if (spCb && spBtn) {
+                                    spCb.checked = !!defaultSwData.spin_show_pos;
+                                    spBtn.textContent = spCb.checked ? 'SHOW POSITION' : 'SHOW %';
+                                    if (spCb.checked) spBtn.classList.add('active'); else spBtn.classList.remove('active');
+                                }
+                            } catch (_) { }
+                        }, 0);
                         const singleInputDefault = document.getElementById('singleValueInput');
                         if (singleInputDefault) {
                             singleInputDefault.value = defaultSwData.single_value ?? 127;
@@ -13617,6 +13637,17 @@
                     }, 0);
 
                     setTimeout(() => { try { syncSpinSendPcUI(!!switchData.spin_send_pc, true); } catch (_) { } }, 0);
+                    setTimeout(() => {
+                        try {
+                            const spCb = document.getElementById('spinShowPositionToggle');
+                            const spBtn = document.getElementById('spinShowPositionBtn');
+                            if (spCb && spBtn) {
+                                spCb.checked = !!switchData.spin_show_pos;
+                                spBtn.textContent = spCb.checked ? 'SHOW POSITION' : 'SHOW %';
+                                if (spCb.checked) spBtn.classList.add('active'); else spBtn.classList.remove('active');
+                            }
+                        } catch (_) { }
+                    }, 0);
 
                     const FAVORITE_MODE_VALUE = 17;
                     if (mode !== FAVORITE_MODE_VALUE) {
@@ -13897,6 +13928,15 @@
                         try {
                             syncSpinSendPcUI(!!sw.spin_send_pc, true);
                         } catch (_) { }
+                        try {
+                            const spCb = document.getElementById('spinShowPositionToggle');
+                            const spBtn = document.getElementById('spinShowPositionBtn');
+                            if (spCb && spBtn) {
+                                spCb.checked = !!sw.spin_show_pos;
+                                spBtn.textContent = spCb.checked ? 'SHOW POSITION' : 'SHOW %';
+                                if (spCb.checked) spBtn.classList.add('active'); else spBtn.classList.remove('active');
+                            }
+                        } catch (_) { }
                         const defaults = getDefaultExtrasData().spin;
                         const sv = (presetData && presetData.extras && Array.isArray(presetData.extras.spin) && presetData.extras.spin[spinIndex])
                             ? presetData.extras.spin[spinIndex]
@@ -14096,6 +14136,12 @@
                         currentSwitchData.spin_send_pc = !!spinSendInput.checked;
                     } else if (currentSwitchData.spin_send_pc === undefined) {
                         currentSwitchData.spin_send_pc = false;
+                    }
+                    const spinShowPosInput = document.getElementById('spinShowPositionToggle');
+                    if (spinShowPosInput) {
+                        currentSwitchData.spin_show_pos = !!spinShowPosInput.checked;
+                    } else if (currentSwitchData.spin_show_pos === undefined) {
+                        currentSwitchData.spin_show_pos = false;
                     }
                     {
                         const chVal = parseInt(document.getElementById('switchChannel').value, 10);
@@ -14699,40 +14745,6 @@
 
             // Call on init
             document.addEventListener('DOMContentLoaded', populateIconSelects);
-
-            window.toggleFxMode = function (slot) {
-                const btn = document.getElementById(slot === 1 ? 'fxModeToggle1' : 'fxModeToggle2');
-                const siglaInput = document.getElementById(slot === 1 ? 'switchSiglaFx' : 'switchSiglaFx2');
-                const iconWrapper = document.querySelector(`.custom-select-wrapper[data-select-id="${slot === 1 ? 'switchIconFx' : 'switchIconFx2'}"]`);
-                const iconSelect = document.getElementById(slot === 1 ? 'switchIconFx' : 'switchIconFx2');
-
-                if (!btn || !siglaInput || !iconWrapper) return;
-
-                const currentMode = btn.dataset.mode; // 'sigla' or 'icon'
-                if (currentMode === 'sigla') {
-                    // Switch to Icon
-                    btn.dataset.mode = 'icon';
-                    btn.textContent = 'ICONE';
-                    siglaInput.style.display = 'none';
-                    iconWrapper.style.display = 'block';
-                    // Optional: Set default icon if 0
-                    if (parseInt(iconSelect.value, 10) === 0) {
-                        iconSelect.value = 1; // Default to ICO1
-                        updateCustomSelect(iconSelect.id);
-                        iconSelect.dispatchEvent(new Event('change'));
-                    }
-                } else {
-                    // Switch to Sigla
-                    btn.dataset.mode = 'sigla';
-                    btn.textContent = 'SIGLA';
-                    siglaInput.style.display = 'block';
-                    iconWrapper.style.display = 'none';
-                    // Reset icon to 0
-                    iconSelect.value = 0;
-                    updateCustomSelect(iconSelect.id);
-                    iconSelect.dispatchEvent(new Event('change'));
-                }
-            };
 
 
             function setupEventListeners() {
@@ -16288,21 +16300,9 @@
             })();
 
             // Toggle between SIGLA (text) and ICON mode
-            // Toggle between SIGLA (text) and ICON mode
             window.toggleFxMode = function (fxNum) {
                 const btn = document.getElementById(`fxModeToggle${fxNum}`);
                 const iconValueInput = document.getElementById(fxNum === 1 ? 'switchIconFxValue' : 'switchIconFx2Value');
-                const dualCheck = document.getElementById('dualStompEnabled');
-                if (dualCheck && dualCheck.checked) {
-                    if (btn) {
-                        btn.setAttribute('data-mode', 'sigla');
-                        btn.textContent = 'SIGLA';
-                    }
-                    if (iconValueInput) iconValueInput.value = '0';
-                    setIconValue(fxNum, 0);
-                    window.refreshGigSlotUI();
-                    return;
-                }
 
                 if (!btn) return;
 
